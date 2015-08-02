@@ -1,5 +1,27 @@
 
-wiringPi README
+
+
+#wiringPi README
+===============
+##How to install wiringPi
+
+The easiest way is to use the supplied 'build' script:
+
+  ./build
+  
+===============
+##How to test wiringPi
+
+1.To use 'gpio' comlmand in your terminal.
+
+2.
+    cd test
+     make
+hello --  for 8X8 RGB LED MATRIX
+52pi -- for 128*64 OLED Module
+lcd1602 -- for RGB 1602 Module
+test -- a simple test for led on pin 7
+
 ===============
 
 Please note that the official way to get wiringPi is via git from
