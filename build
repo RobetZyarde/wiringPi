@@ -1,0 +1,146 @@
+#!/bin/sh
+
+# check if sudo is required and save the result as ${PFX}:
+[[ ${EUID} -ne 0 ]] && PFX='sudo ' || PFX=''
+
+check_make_ok() {
+  if [ $? != 0 ]; then
+    echo ""
+    echo "Make Failed..."
+    echo "Please check the messages and fix any problems. If you're still stuck,"
+    echo "then please email all the output and as many details as you can to"
+    echo "  projects@drogon.net"
+    echo ""
+    exit 1
+  fi
+}
+
+if [ x$1 = "xclean" ]; then
+  cd wiringPi
+  echo -n "wiringPi:   "	; make clean
+  cd ../devLib
+  echo -n "DevLib:     "	; make clean
+  cd ../gpio
+  echo -n "gpio:       "	; make clean
+  cd ../examples
+  echo -n "Examples:   "	; make clean
+  cd Gertboard
+  echo -n "Gertboard:  "	; make clean
+  cd ../PiFace
+  echo -n "PiFace:     "	; make clean
+  cd ../q2w
+  echo -n "Quick2Wire: "	; make clean
+  cd ../PiGlow
+  echo -n "PiGlow:     "	; make clean
+  exit
+fi
+
+if [ x$1 = "xuninstall" ]; then
+  cd wiringPi
+  echo -n "wiringPi: " ; ${PFX}make uninstall
+  cd ../devLib
+  echo -n "DevLib:   " ; ${PFX}make uninstall
+  cd ../gpio
+  echo -n "gpio:     " ; ${PFX}make uninstall
+  exit
+fi
+
+# Only if you know what you're doing!
+
+if [ x$1 = "xdebian" ]; then
+  here=`pwd`
+  cd debian/wiringPi
+  rm -rf usr
+  cd $here/wiringPi
+  make install-deb
+  cd $here/devLib
+  make install-deb
+  cd $here/gpio
+  make install-deb
+  cd $here/debian
+  fakeroot dpkg-deb --build wiringPi
+  mv wiringPi.deb  wiringpi-`cat $here/VERSION`-1.deb
+  exit
+fi
+
+if [ x$1 != "x" ]; then
+  echo "Usage: $0 [clean | uninstall]"
+  exit 1
+fi
+
+  echo "wiringPi Build script"
+  echo "====================="
+  echo
+
+  hardware=`fgrep Hardware /proc/cpuinfo | head -1 | awk '{ print $3 }'`
+
+#  if [ x$hardware != "xBCM2708" ]; then
+#    echo ""
+#    echo "   +------------------------------------------------------------+"
+#    echo "   |   wiringPi is designed to run on the Raspberry Pi only.    |"
+#    echo "   |   This processor does not appear to be a Raspberry Pi.     |"
+#    echo "   +------------------------------------------------------------+"
+#    echo "   | In the unlikely event that you think it is a Raspberry Pi, |"
+#    echo "   | then please accept my apologies and email the contents of  |"
+#    echo "   | /proc/cpuinfo to projects@drogon.net.                      |"
+#    echo "   |    - Thanks, Gordon                                        |"
+#    echo "   +------------------------------------------------------------+"
+#    echo ""
+#    exit 1
+#  fi
+
+
+  echo
+  echo "WiringPi Library"
+  cd wiringPi
+  ${PFX}make uninstall
+  if [ x$1 = "xstatic" ]; then
+    make -j5 static
+    check_make_ok
+    ${PFX}make install-static
+  else
+    make -j5
+    check_make_ok
+    ${PFX}make install
+  fi
+  check_make_ok
+
+  echo
+  echo "WiringPi Devices Library"
+  cd ../devLib
+  ${PFX}make uninstall
+  if [ x$1 = "xstatic" ]; then
+    make -j5 static
+    check_make_ok
+    ${PFX}make install-static
+  else
+    make -j5
+    check_make_ok
+    ${PFX}make install
+  fi
+  check_make_ok
+
+  echo
+  echo "GPIO Utility"
+  cd ../gpio
+  make -j5
+  check_make_ok
+  ${PFX}make install
+  check_make_ok
+
+# echo
+# echo "Examples"
+# cd ../examples
+# make
+# cd ..
+
+echo
+echo All Done.
+echo ""
+echo "NOTE: To compile programs with wiringPi,you need to add:"
+echo "    -lwiringPi"
+echo "  to your compile line(s) To use the Gertboard, MaxDetect, etc."
+echo "  code (the devLib), you need to also add:"
+echo "    -lwiringPiDev"
+echo "  to your compile line(s)."
+echo ""
